@@ -32,15 +32,15 @@ async function commonBeforeAll() {
 }
 
 async function commonBeforeEach() {
-  await db.query("BEGIN");
+  await db.query("BEGIN"); // begin the transaction block
 }
 
 async function commonAfterEach() {
-  await db.query("ROLLBACK");
+  await db.query("ROLLBACK"); // rollback the transaction
 }
 
 async function commonAfterAll() {
-  await db.end();
+  await db.end(); // end the session
 }
 
 

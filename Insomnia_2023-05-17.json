@@ -1,0 +1,119 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2023-05-17T17:50:31.371Z",
+  "__export_source": "insomnia.desktop.app:v2023.2.1",
+  "resources": [
+    {
+      "_id": "req_a4cb9eae138341d8976772bc954c49a5",
+      "parentId": "fld_0ceb669320dd4718b47f25d055a58fbd",
+      "modified": 1684345700164,
+      "created": 1684345524442,
+      "url": "{{ _.BASE_URL }}/{{ _.AUTH }}/register",
+      "name": "Register tuckerdiane",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\t\"username\": \"tuckerdiane\", \n\t\t\"password\": \"password\",\n\t\t\"firstName\": \"tucker\", \n\t\t\"lastName\": \"diane\", \n\t\t\"email\": \"tuckerdiane@example.com\"\n}"
+      },
+      "parameters": [],
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "authentication": {},
+      "metaSortKey": -1684345524442,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0ceb669320dd4718b47f25d055a58fbd",
+      "parentId": "wrk_d1f440a16f5f479ebebae9c78d4e6556",
+      "modified": 1684344324810,
+      "created": 1684344324810,
+      "name": "Auth",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1684344324810,
+      "_type": "request_group"
+    },
+    {
+      "_id": "wrk_d1f440a16f5f479ebebae9c78d4e6556",
+      "parentId": null,
+      "modified": 1684344291993,
+      "created": 1684344291993,
+      "name": "Jobly",
+      "description": "",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "req_4de973a2de0b4e229f11b67e23dbac18",
+      "parentId": "fld_0ceb669320dd4718b47f25d055a58fbd",
+      "modified": 1684345513221,
+      "created": 1684345006979,
+      "url": "{{ _.BASE_URL }}/{{ _.AUTH }}/token",
+      "name": "Get Token",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{ \n\t\"username\": \"testuser\", \n\t\"password\": \"password\"\n}"
+      },
+      "parameters": [],
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "authentication": {},
+      "metaSortKey": -1684345006979,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "env_1fb7299837a21b73d5ffc39578a0ff654af1cb9b",
+      "parentId": "wrk_d1f440a16f5f479ebebae9c78d4e6556",
+      "modified": 1684345003661,
+      "created": 1684344292150,
+      "name": "Base Environment",
+      "data": {
+        "BASE_URL": "http://localhost:3001",
+        "USERS": "users",
+        "AUTH": "auth",
+        "COMPANIES": "companies"
+      },
+      "dataPropertyOrder": { "&": ["BASE_URL", "USERS", "AUTH", "COMPANIES"] },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1684344292150,
+      "_type": "environment"
+    },
+    {
+      "_id": "jar_1fb7299837a21b73d5ffc39578a0ff654af1cb9b",
+      "parentId": "wrk_d1f440a16f5f479ebebae9c78d4e6556",
+      "modified": 1684344292155,
+      "created": 1684344292155,
+      "name": "Default Jar",
+      "cookies": [],
+      "_type": "cookie_jar"
+    },
+    {
+      "_id": "spc_34e9fd6579b04a82b329c0e6da36b4cc",
+      "parentId": "wrk_d1f440a16f5f479ebebae9c78d4e6556",
+      "modified": 1684344292049,
+      "created": 1684344292049,
+      "fileName": "Jobly",
+      "contents": "",
+      "contentType": "yaml",
+      "_type": "api_spec"
+    }
+  ]
+}
