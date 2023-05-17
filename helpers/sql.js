@@ -28,4 +28,23 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   };
 }
 
+/**WHERE name ILIKE nameLike
+          AND num_employees > minEmployees
+          AND num_employees < maxEmployees */
+
+function sqlForFiltering(dataToUpdate, jsToSql) {
+  const keys = Object.keys(dataToUpdate);
+  if (keys.length === 0) throw new BadRequestError("No data");
+
+  // {nameLike: 'net', minEmployees: 200, maxEmployees; 800} => ['"name"=$1', '"num_employees"=$2']
+  const cols = keys.map((colName, idx) =>
+      `"${jsToSql[colName] || colName}"=$${idx + 1}`,
+  );
+
+  return {
+    setCols: cols.join(", "),
+    values: Object.values(dataToUpdate),
+  };
+}
+
 module.exports = { sqlForPartialUpdate };

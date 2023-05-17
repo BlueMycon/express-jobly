@@ -55,7 +55,7 @@ class Company {
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll() {
+  static async findAll({ nameLike, minEmployees, maxEmployees }) {
     const companiesRes = await db.query(`
         SELECT handle,
                name,
@@ -63,13 +63,15 @@ class Company {
                num_employees AS "numEmployees",
                logo_url      AS "logoUrl"
         FROM companies
+        WHERE name ILIKE nameLike
+          AND num_employees > minEmployees
+          AND num_employees < maxEmployees
         ORDER BY name`);
     return companiesRes.rows;
   }
 
   /** Given a company handle, return data about company.
    *
-   * Returns { handle, name, description, numEmployees, logoUrl, jobs }
    *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
    *
    * Throws NotFoundError if not found.
