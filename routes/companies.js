@@ -3,7 +3,6 @@
 /** Routes for companies. */
 
 const jsonschema = require("jsonschema");
-const filterSchema = require("../schemas/filterSchema");
 const express = require("express");
 
 const { BadRequestError } = require("../expressError");
@@ -12,6 +11,7 @@ const Company = require("../models/company");
 
 const companyNewSchema = require("../schemas/companyNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
+const companyFilterSchema = require("../schemas/companyFilter");
 
 const router = new express.Router();
 
@@ -49,7 +49,17 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
-  const result = jsonschema.validate(req.query, filterSchema, { required: false }); //TODO: false?? Not sure exactly how this works
+  if (
+    "minEmployees" in req.query &&
+    "maxEmployees" in req.query &&
+    req.query["minEmployees"] > req.query["maxEmployees"]
+  ) {
+    throw new BadRequestError();
+  }
+
+  const result = jsonschema.validate(req.query, companyFilterSchema, {
+    required: false,
+  }); //TODO: false?? Not sure exactly how this works
   if (!result.valid) {
     // pass validation errors to error handler
     // (the "stack" key is generally the most useful)
@@ -57,7 +67,7 @@ router.get("/", async function (req, res, next) {
     throw new BadRequestError(errs);
   }
 
-  const companies = await Company.findAll(req.query);
+  const companies = await Company.findAllWithFilter(req.query);
 
   return res.json({ companies });
 });

@@ -49,12 +49,16 @@ class Company {
     return company;
   }
 
-  /** Find all companies.
+  /** Find all companies,
+   * Can filter on (optional) provided search filters:
+   * - minEmployees
+   * - maxEmployees
+   * - nameLike (will find case-insensitive, partial matches).
    *
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll(filterQuery) {
+  static async findAllWithFilter(filterQuery) {
     let whereClause = "";
     let values = [];
     if (!Object.keys(filterQuery).length === 0) {

@@ -28,9 +28,20 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   };
 }
 
-/**WHERE name ILIKE nameLike
-          AND num_employees >= minEmployees
-          AND num_employees <= maxEmployees */
+/** SQL for Filtering { dataToFilter } =>  { whereClause, values }
+ *
+ * dataToFilter could be { nameLike: 'net', minEmployees: 10, maxEmployees: 400 }
+ *    all are optional; if not data passed in, function returns immediately;
+ *
+ * Returns { whereClause, values }:
+ *
+ * whereClause:
+ *      name ILIKE $1
+ *      AND num_employees >= $2
+ *      AND num_employees <= $3
+ * values:
+ *      ['%net%', 10, 400]
+*/
 
 function sqlForFiltering(dataToFilter) {
   if (!dataToFilter) return;
