@@ -2,7 +2,7 @@
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate } = require("../helpers/sql");
+const { sqlForPartialUpdate, sqlForFiltering } = require("../helpers/sql");
 
 /** Related functions for companies. */
 
@@ -17,15 +17,19 @@ class Company {
    * */
 
   static async create({ handle, name, description, numEmployees, logoUrl }) {
-    const duplicateCheck = await db.query(`
+    const duplicateCheck = await db.query(
+      `
         SELECT handle
         FROM companies
-        WHERE handle = $1`, [handle]);
+        WHERE handle = $1`,
+      [handle]
+    );
 
     if (duplicateCheck.rows[0])
       throw new BadRequestError(`Duplicate company: ${handle}`);
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
                 INSERT INTO companies (handle,
                                        name,
                                        description,
@@ -37,13 +41,8 @@ class Company {
                     name,
                     description,
                     num_employees AS "numEmployees",
-                    logo_url AS "logoUrl"`, [
-          handle,
-          name,
-          description,
-          numEmployees,
-          logoUrl,
-        ],
+                    logo_url AS "logoUrl"`,
+      [handle, name, description, numEmployees, logoUrl]
     );
     const company = result.rows[0];
 
@@ -55,18 +54,25 @@ class Company {
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll({ nameLike, minEmployees, maxEmployees }) {
-    const companiesRes = await db.query(`
-        SELECT handle,
-               name,
-               description,
-               num_employees AS "numEmployees",
-               logo_url      AS "logoUrl"
-        FROM companies
-        WHERE name ILIKE nameLike
-          AND num_employees > minEmployees
-          AND num_employees < maxEmployees
-        ORDER BY name`);
+  static async findAll(filterQuery) {
+    let whereClause = "";
+    let values = [];
+    if (!Object.keys(filterQuery).length === 0) {
+      let result = sqlForFiltering(filterQuery);
+      whereClause = result.whereClause;
+      values = result.values;
+    }
+    const query =
+      `
+      SELECT handle,
+            name,
+            description,
+            num_employees AS "numEmployees",
+            logo_url      AS "logoUrl"
+      FROM companies` +
+      `${whereClause ? "\nWHERE " + whereClause : ""}` +
+      `\nORDER BY name`;
+    const companiesRes = await db.query(query, [...values]);
     return companiesRes.rows;
   }
 
@@ -78,14 +84,17 @@ class Company {
    **/
 
   static async get(handle) {
-    const companyRes = await db.query(`
+    const companyRes = await db.query(
+      `
         SELECT handle,
                name,
                description,
                num_employees AS "numEmployees",
                logo_url      AS "logoUrl"
         FROM companies
-        WHERE handle = $1`, [handle]);
+        WHERE handle = $1`,
+      [handle]
+    );
 
     const company = companyRes.rows[0];
 
@@ -107,12 +116,10 @@ class Company {
    */
 
   static async update(handle, data) {
-    const { setCols, values } = sqlForPartialUpdate(
-        data,
-        {
-          numEmployees: "num_employees",
-          logoUrl: "logo_url",
-        });
+    const { setCols, values } = sqlForPartialUpdate(data, {
+      numEmployees: "num_employees",
+      logoUrl: "logo_url",
+    });
     const handleVarIdx = "$" + (values.length + 1);
 
     const querySql = `
@@ -139,16 +146,18 @@ class Company {
    **/
 
   static async remove(handle) {
-    const result = await db.query(`
+    const result = await db.query(
+      `
         DELETE
         FROM companies
         WHERE handle = $1
-        RETURNING handle`, [handle]);
+        RETURNING handle`,
+      [handle]
+    );
     const company = result.rows[0];
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
   }
 }
-
 
 module.exports = Company;
