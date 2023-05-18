@@ -72,6 +72,7 @@ describe("ensureCorrectUser", function () {
     const req = { params: { username: "test" } };
     const res = { locals: { user: { username: "test" } } };
     ensureCorrectUser(req, res, next); // TODO: how do we test if next() is called
+    //TODO: test error isNotThrown (find matcher)
   });
 
   test("unauth not correct user", function () {

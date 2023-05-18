@@ -123,7 +123,7 @@ describe("findAllWithFilter", function () {
 
 
 describe("sqlForFiltering", function () {
-  test("works", function () {
+  test("works where all fields passed in", function () {
     const dataToFilter = { nameLike: 'net', minEmployees: 10, maxEmployees: 400 };
     const sql = Company.sqlForFiltering(dataToFilter);
 
@@ -133,7 +133,7 @@ describe("sqlForFiltering", function () {
     });
   });
 
-  test("works", function () {
+  test("works for 2 fields", function () {
     const dataToFilter = { nameLike: 'net', minEmployees: 10};
     const sql = Company.sqlForFiltering(dataToFilter);
 
@@ -143,7 +143,7 @@ describe("sqlForFiltering", function () {
     });
   });
 
-  test("works", function () {
+  test("works for min and maxEmployees", function () {
     const dataToFilter = { minEmployees: 10, maxEmployees: 400 };
     const sql = Company.sqlForFiltering(dataToFilter);
 

@@ -6,7 +6,7 @@ const jsonschema = require("jsonschema");
 const express = require("express");
 
 const { BadRequestError } = require("../expressError");
-const { ensureLoggedIn } = require("../middleware/auth");
+const { ensureIsAdmin } = require("../middleware/auth");
 const Company = require("../models/company");
 
 const companyNewSchema = require("../schemas/companyNew.json");
@@ -15,16 +15,17 @@ const companyFilterSchema = require("../schemas/companyFilter");
 
 const router = new express.Router();
 
-/** POST / { company } =>  { company }
+/**Create a new company
+ * POST / { company } =>  { company }
  *
  * company should be { handle, name, description, numEmployees, logoUrl }
  *
  * Returns { handle, name, description, numEmployees, logoUrl }
  *
- * Authorization required: login
+ * Authorization required: admin
  */
 
-router.post("/", ensureLoggedIn, async function (req, res, next) {
+router.post("/", ensureIsAdmin, async function (req, res, next) {
   const validator = jsonschema.validate(req.body, companyNewSchema, {
     required: true,
   });
@@ -37,7 +38,8 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
   return res.status(201).json({ company });
 });
 
-/** GET /  =>
+/** Get info about all companies
+ * GET /  =>
  *   { companies: [ { handle, name, description, numEmployees, logoUrl }, ...] }
  *
  * Can filter on provided search filters:
@@ -86,7 +88,8 @@ router.get("/", async function (req, res, next) {
   return res.json({ companies });
 });
 
-/** GET /[handle]  =>  { company }
+/**Get info about single company
+ * GET /[handle]  =>  { company }
  *
  *  Company is { handle, name, description, numEmployees, logoUrl, jobs }
  *   where jobs is [{ id, title, salary, equity }, ...]
@@ -99,7 +102,8 @@ router.get("/:handle", async function (req, res, next) {
   return res.json({ company });
 });
 
-/** PATCH /[handle] { fld1, fld2, ... } => { company }
+/** Update company info
+ * PATCH /[handle] { fld1, fld2, ... } => { company }
  *
  * Patches company data.
  *
@@ -107,11 +111,13 @@ router.get("/:handle", async function (req, res, next) {
  *
  * Returns { handle, name, description, numEmployees, logo_url }
  *
- * Authorization required: login
+ * Authorization required: admin
  */
 
-router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
-  const validator = jsonschema.validate(req.body, companyUpdateSchema, {
+router.patch("/:handle", ensureIsAdmin, async function (req, res, next) {
+  const validator = jsonschema.validate(
+    req.body,
+    companyUpdateSchema, {
     required: true,
   });
   if (!validator.valid) {
@@ -123,12 +129,13 @@ router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
   return res.json({ company });
 });
 
-/** DELETE /[handle]  =>  { deleted: handle }
+/**Delete a company
+ * DELETE /[handle]  =>  { deleted: handle }
  *
- * Authorization: login
+ * Authorization required: admin
  */
 
-router.delete("/:handle", ensureLoggedIn, async function (req, res, next) {
+router.delete("/:handle", ensureIsAdmin, async function (req, res, next) {
   await Company.remove(req.params.handle);
   return res.json({ deleted: req.params.handle });
 });
