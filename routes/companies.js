@@ -49,16 +49,18 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
+  console.log('\n\nreq.query=',req.query)
   if (
     "minEmployees" in req.query &&
     "maxEmployees" in req.query &&
     req.query["minEmployees"] > req.query["maxEmployees"]
   ) {
+    console.log('\n\n HERE \n\n')
     throw new BadRequestError();
   }
 
   const result = jsonschema.validate(req.query, companyFilterSchema, {
-    required: false,
+    required: true,
   }); //TODO: false?? Not sure exactly how this works
   if (!result.valid) {
     // pass validation errors to error handler

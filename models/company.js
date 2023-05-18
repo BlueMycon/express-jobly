@@ -2,7 +2,7 @@
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate, sqlForFiltering } = require("../helpers/sql");
+const { sqlForPartialUpdate } = require("../helpers/sql");
 
 /** Related functions for companies. */
 
@@ -61,8 +61,9 @@ class Company {
   static async findAllWithFilter(filterQuery) {
     let whereClause = "";
     let values = [];
-    if (!Object.keys(filterQuery).length === 0) {
-      let result = sqlForFiltering(filterQuery);
+
+    if (Object.keys(filterQuery).length !== 0) {
+      let result = Company.sqlForFiltering(filterQuery);
       whereClause = result.whereClause;
       values = result.values;
     }
@@ -78,6 +79,48 @@ class Company {
       `\nORDER BY name`;
     const companiesRes = await db.query(query, [...values]);
     return companiesRes.rows;
+  }
+
+  /** SQL for Filtering { dataToFilter } =>  { whereClause, values }
+   *
+   * dataToFilter could be { nameLike: 'net', minEmployees: 10, maxEmployees: 400 }
+   *    all are optional; if not data passed in, function returns immediately;
+   *
+   * Returns { whereClause, values }:
+   *
+   * whereClause:
+   *      name ILIKE $1
+   *      AND num_employees >= $2
+   *      AND num_employees <= $3
+   * values:
+   *      ['%net%', 10, 400]
+   */
+  static sqlForFiltering(dataToFilter) {
+    if (!dataToFilter) return;
+    const keys = Object.keys(dataToFilter);
+    if (keys.length === 0) return;
+
+    // {nameLike: 'net', minEmployees: 200, maxEmployees; 800} => ['"name"=$1', '"num_employees"=$2']
+    const cols = keys.map((colName, idx) => {
+      if (colName === "nameLike") {
+        console.log(
+          'dataToFilter["nameLike"] before',
+          dataToFilter["nameLike"]
+        );
+        dataToFilter["nameLike"] = `%${dataToFilter["nameLike"]}%`;
+        console.log("after", dataToFilter["nameLike"]);
+        return `name ILIKE $${idx + 1}`;
+      } else if (colName === "minEmployees") {
+        return `num_employees >= $${idx + 1}`;
+      } else if (colName === "maxEmployees") {
+        return `num_employees <= $${idx + 1}`;
+      }
+    });
+
+    return {
+      whereClause: cols.join(" AND "),
+      values: Object.values(dataToFilter),
+    };
   }
 
   /** Given a company handle, return data about company.

@@ -85,7 +85,67 @@ describe("findAllWithFilter", function () {
       },
     ]);
   });
+
+  test("works: with filter for name", async function () {
+    let companies = await Company.findAllWithFilter({nameLike: "C1"});
+    expect(companies).toEqual([
+      {
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      },
+    ]);
+  });
+
+  test("works: with filter for min and max employees", async function () {
+    let companies = await Company.findAllWithFilter({minEmployees: 2, maxEmployees: 3});
+    expect(companies).toEqual([
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      },
+      {
+        handle: "c3",
+        name: "C3",
+        description: "Desc3",
+        numEmployees: 3,
+        logoUrl: "http://c3.img",
+      },
+    ]);
+  });
 });
+/************************************** sqlForFiltering */
+
+
+describe("sqlForFiltering", function () {
+  test("works", function () {
+    const dataToFilter = { nameLike: 'net', minEmployees: 10, maxEmployees: 400 };
+    const sql = Company.sqlForFiltering(dataToFilter);
+
+    expect(sql).toEqual({
+      whereClause: 'name ILIKE $1 AND num_employees >= $2 AND num_employees <= $3',
+      values: ['%net%', 10, 400],
+    });
+  });
+
+
+  test("return immediately if data undefined", function () {
+    let dataToFilter;
+    expect(Company.sqlForFiltering(dataToFilter)).toBeUndefined();
+  });
+
+
+  test("return immediately if data empty", function () {
+    const dataToFilter = {};
+    expect(Company.sqlForFiltering(dataToFilter)).toBeUndefined();
+  });
+});
+
 
 /************************************** get */
 

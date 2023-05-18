@@ -22,3 +22,4 @@ describe("sqlForPartialUpdate", function () {
     expect(() => sqlForPartialUpdate(dataToUpdate, jsToSql)).toThrow(BadRequestError);
   });
 });
+
