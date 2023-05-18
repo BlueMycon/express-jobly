@@ -128,21 +128,41 @@ describe("sqlForFiltering", function () {
     const sql = Company.sqlForFiltering(dataToFilter);
 
     expect(sql).toEqual({
-      whereClause: 'name ILIKE $1 AND num_employees >= $2 AND num_employees <= $3',
+      whereClause: '\nWHERE name ILIKE $1 AND num_employees >= $2 AND num_employees <= $3',
       values: ['%net%', 10, 400],
     });
   });
 
+  test("works", function () {
+    const dataToFilter = { nameLike: 'net', minEmployees: 10};
+    const sql = Company.sqlForFiltering(dataToFilter);
 
-  test("return immediately if data undefined", function () {
+    expect(sql).toEqual({
+      whereClause: '\nWHERE name ILIKE $1 AND num_employees >= $2',
+      values: ['%net%', 10],
+    });
+  });
+
+  test("works", function () {
+    const dataToFilter = { minEmployees: 10, maxEmployees: 400 };
+    const sql = Company.sqlForFiltering(dataToFilter);
+
+    expect(sql).toEqual({
+      whereClause: '\nWHERE num_employees >= $1 AND num_employees <= $2',
+      values: [10, 400],
+    });
+  });
+
+
+  test("return if data undefined", function () {
     let dataToFilter;
-    expect(Company.sqlForFiltering(dataToFilter)).toBeUndefined();
+    expect(Company.sqlForFiltering(dataToFilter)).toEqual({whereClause: "", values: []});
   });
 
 
   test("return immediately if data empty", function () {
     const dataToFilter = {};
-    expect(Company.sqlForFiltering(dataToFilter)).toBeUndefined();
+    expect(Company.sqlForFiltering(dataToFilter)).toEqual({whereClause: "", values: []});
   });
 });
 

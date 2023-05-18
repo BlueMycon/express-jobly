@@ -49,19 +49,31 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
-  console.log('\n\nreq.query=',req.query)
+  let minEmployees;
+  let maxEmployees;
+  let nameLike = req.query["nameLike"];
+
+  if (req.query.minEmployees) {
+    minEmployees = Number(req.query.minEmployees);
+  }
+  if (req.query.maxEmployees) {
+    maxEmployees = Number(req.query.maxEmployees);
+  }
+
   if (
     "minEmployees" in req.query &&
     "maxEmployees" in req.query &&
     req.query["minEmployees"] > req.query["maxEmployees"]
   ) {
-    console.log('\n\n HERE \n\n')
     throw new BadRequestError();
   }
 
-  const result = jsonschema.validate(req.query, companyFilterSchema, {
+  const queryResp = { nameLike, minEmployees, maxEmployees };
+
+  const result = jsonschema.validate(queryResp, companyFilterSchema, {
     required: true,
-  }); //TODO: false?? Not sure exactly how this works
+  });
+
   if (!result.valid) {
     // pass validation errors to error handler
     // (the "stack" key is generally the most useful)

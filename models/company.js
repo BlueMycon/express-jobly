@@ -59,14 +59,8 @@ class Company {
    * */
 
   static async findAllWithFilter(filterQuery) {
-    let whereClause = "";
-    let values = [];
+    const {whereClause, values} = Company.sqlForFiltering(filterQuery);
 
-    if (Object.keys(filterQuery).length !== 0) {
-      let result = Company.sqlForFiltering(filterQuery);
-      whereClause = result.whereClause;
-      values = result.values;
-    }
     const query =
       `
       SELECT handle,
@@ -75,8 +69,7 @@ class Company {
             num_employees AS "numEmployees",
             logo_url      AS "logoUrl"
       FROM companies` +
-      `${whereClause ? "\nWHERE " + whereClause : ""}` +
-      `\nORDER BY name`;
+      `${whereClause}` + `\nORDER BY name`;
     const companiesRes = await db.query(query, [...values]);
     return companiesRes.rows;
   }
@@ -96,17 +89,13 @@ class Company {
    *      ['%net%', 10, 400]
    */
   static sqlForFiltering(dataToFilter) {
-    if (!dataToFilter) return;
+    if (!dataToFilter) return {whereClause: "", values: []};
     const keys = Object.keys(dataToFilter);
-    if (keys.length === 0) return;
+    if (keys.length === 0) return {whereClause: "", values: []};
 
     // {nameLike: 'net', minEmployees: 200, maxEmployees; 800} => ['"name"=$1', '"num_employees"=$2']
     const cols = keys.map((colName, idx) => {
       if (colName === "nameLike") {
-        console.log(
-          'dataToFilter["nameLike"] before',
-          dataToFilter["nameLike"]
-        );
         dataToFilter["nameLike"] = `%${dataToFilter["nameLike"]}%`;
         console.log("after", dataToFilter["nameLike"]);
         return `name ILIKE $${idx + 1}`;
@@ -117,8 +106,10 @@ class Company {
       }
     });
 
+    const whereClause = cols.length > 0 ? "\nWHERE " + cols.join(" AND ") : "";
+
     return {
-      whereClause: cols.join(" AND "),
+      whereClause,
       values: Object.values(dataToFilter),
     };
   }

@@ -98,19 +98,16 @@ describe("GET /companies", function () {
   });
 
   test("fails for minEmployees > maxEmployees", async function () {
-    // try {
-    //   await request(app).get("/companies?minEmployees=40&maxEmployees=10");
-    //   throw new Error("fail test, you shouldn't get here");
-    // } catch (err) {
-    //   expect(err instanceof BadRequestError).toBeTruthy();
-    // }
-    // expect(async () => await request(app).get("/companies?minEmployees=40&maxEmployees=10")).toThrow(BadRequestError);
     const resp = await request(app).get("/companies?minEmployees=40&maxEmployees=10");
     expect(resp.statusCode).toEqual(400);
   });
 
   test("test for json schema invalid", async function () {
     const resp = await request(app).get("/companies?minEmployees=hello");
+    expect(resp.statusCode).toEqual(400);
+  });
+  test("test for json schema invalid", async function () {
+    const resp = await request(app).get("/companies?maxEmployees=hello");
     expect(resp.statusCode).toEqual(400);
   });
 });
