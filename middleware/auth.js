@@ -52,7 +52,7 @@ function ensureCorrectUser(req, res, next) {
   return next();
 }
 
-/** Middleware: Requires user is admin for route. */
+/** Middleware: Requires user is admin. */
 
 function ensureIsAdmin(req, res, next) {
   const currentUser = res.locals.user;
@@ -64,6 +64,8 @@ function ensureIsAdmin(req, res, next) {
 
   return next(); // TODO: can we pass anything into next()?
 }
+
+/** Middleware: Requires user is user for route or is admin. */
 
 function ensureCorrectUserOrIsAdmin(req, res, next) {
   const currentUser = res.locals.user;
