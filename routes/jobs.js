@@ -29,7 +29,7 @@ router.post("/", ensureIsAdmin, async function (req, res, next) {
   const { title, salary, equity, companyHandle } = req.body;
   // TODO: validate equity via decimal.js
   const validator = jsonschema.validate(
-    { title, salary, equity, companyHandle },
+    { title, salary, equity: Number(equity), companyHandle },
     jobNewSchema,
     { required: true }
   );
@@ -113,10 +113,10 @@ router.get("/:id", async function (req, res, next) {
 // TODO: middleware for URL param type integer
 // TODO: what if you want path/:id and also path/:name for same path?
 router.patch("/:id", ensureIsAdmin, async function (req, res, next) {
-  const { title, salary, equity } = req.body;
+  let { title, salary, equity } = req.body;
+  equity = Number(equity)
 
   let jobData = {};
-
   for (let [key, value] of Object.entries({title, salary, equity})) {
     if (value) {
       jobData[key] = value;

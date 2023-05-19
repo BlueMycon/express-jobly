@@ -171,7 +171,7 @@ describe("PATCH /jobs/:id", function () {
       .send({
         title: "j1-new",
         salary: 111111,
-        equity: "0.2",
+        equity: 0.2,
       })
       .set("authorization", `Bearer ${adminToken}`);
     expect(resp.body).toEqual({
@@ -191,7 +191,7 @@ describe("PATCH /jobs/:id", function () {
       .send({
         title: "j1-new",
         salary: 111111,
-        equity: "0.2",
+        equity: 0.2,
       })
       .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(401);
@@ -201,7 +201,7 @@ describe("PATCH /jobs/:id", function () {
     const resp = await request(app).patch(`/jobs/c1`).send({
       title: "j1-new",
       salary: 111111,
-      equity: "0.2",
+      equity: 0.2,
     });
     expect(resp.statusCode).toEqual(401);
   });
@@ -222,7 +222,7 @@ describe("PATCH /jobs/:id", function () {
       .send({
         title: "j1-new",
         salary: 111111,
-        equity: "0.2",
+        equity: 0.2,
         randomKey: "randomValue",
       })
       .set("authorization", `Bearer ${adminToken}`);
@@ -243,7 +243,7 @@ describe("PATCH /jobs/:id", function () {
       .send({
         title: 123,
         salary: "200000",
-        equity: "98.6",
+        equity: 98.6,
       })
       .set("authorization", `Bearer ${adminToken}`);
     expect(resp.statusCode).toEqual(400);
