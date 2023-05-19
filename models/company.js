@@ -59,7 +59,7 @@ class Company {
    * */
 
   static async findAllWithFilter(filterQuery) {
-    const {whereClause, values} = Company.sqlForFiltering(filterQuery);
+    const { whereClause, values } = Company.sqlForFiltering(filterQuery);
 
     const query =
       `
@@ -69,7 +69,8 @@ class Company {
             num_employees AS "numEmployees",
             logo_url      AS "logoUrl"
       FROM companies` +
-      `${whereClause}` + `\nORDER BY name`;
+      `${whereClause}` +
+      `\nORDER BY name`;
     const companiesRes = await db.query(query, [...values]);
     return companiesRes.rows;
   }
@@ -89,9 +90,9 @@ class Company {
    *      ['%net%', 10, 400]
    */
   static sqlForFiltering(dataToFilter) {
-    if (!dataToFilter) return {whereClause: "", values: []};
+    if (!dataToFilter) return { whereClause: "", values: [] };
     const keys = Object.keys(dataToFilter);
-    if (keys.length === 0) return {whereClause: "", values: []};
+    if (keys.length === 0) return { whereClause: "", values: [] };
 
     // {nameLike: 'net', minEmployees: 200, maxEmployees; 800} => ['"name"=$1', '"num_employees"=$2']
     const cols = keys.map((colName, idx) => {
@@ -116,7 +117,8 @@ class Company {
 
   /** Given a company handle, return data about company.
    *
-   *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
+   * Return company { handle, name, description, numEmployees, logoUrl, jobs }
+   *   where jobs is [{ id, title, salary, equity }, ...]
    *
    * Throws NotFoundError if not found.
    **/
@@ -133,12 +135,26 @@ class Company {
         WHERE handle = $1`,
       [handle]
     );
-
     const company = companyRes.rows[0];
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
 
-    return company;
+    const jobsRes = await db.query(
+      `
+      SELECT id, title, salary, equity
+      FROM jobs
+      WHERE jobs.company_handle = $1`,
+      [handle]
+    );
+
+    let jobs;
+    if (!jobsRes.rows[0]) {
+      jobs = [];
+    } else {
+      jobs = jobsRes.rows;
+    }
+
+    return { ...company, jobs };
   }
 
   /** Update company data with `data`.

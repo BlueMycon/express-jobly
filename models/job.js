@@ -15,19 +15,23 @@ class Job {
    *
    * Returns { id, title, salary, equity, companyHandle }
    *
-   * Throws BadRequestError if job already in database.
+   * Throws BadRequestError if company handle has no reference.
    * */
 
   static async create({ title, salary, equity, companyHandle }) {
     // check for invalid company handle
-    await Company.get(companyHandle);
+    try {
+      await Company.get(companyHandle);
+    } catch (err) {
+      throw err;
+    }
 
     const result = await db.query(
       `
         INSERT INTO jobs (title, salary, equity, company_handle)
         VALUES ($1, $2, $3, $4)
         RETURNING
-          id, title, salary, equity, company_handle AS companyHandle`,
+          id, title, salary, equity, company_handle AS "companyHandle"`,
       [title, salary, equity, companyHandle]
     );
     const job = result.rows[0];
@@ -37,7 +41,7 @@ class Job {
 
   /** Find all jobs,
    * Can filter on (optional) provided search filters:
-   * - title
+   * - titleLike (will find case-insensitive, partial matches)
    * - minSalary
    * - hasEquity (boolean, if not given acts as if false)
    *
@@ -46,13 +50,11 @@ class Job {
 
   static async findAllWithFilter(filterQuery) {
     const { whereClause, values } = Job.sqlForFiltering(filterQuery);
-
     const query =
       `
-      SELECT id, title, salary, equity, company_handle
+      SELECT id, title, salary, equity, company_handle AS "companyHandle"
       FROM jobs` +
-      `${whereClause}` +
-      `\nORDER BY name`;
+      `${whereClause}` + `\nORDER BY id`;
     const jobsRes = await db.query(query, [...values]);
     return jobsRes.rows;
   }
@@ -66,23 +68,25 @@ class Job {
    *
    * whereClause:
    *      title ILIKE $1
-   *      AND min_salary >= $2
+   *      AND salary >= $2
    *      AND equity IS NOT NULL AND equity != 0
    * values:
    *      ['%boss%', 1000000]
    */
   static sqlForFiltering(dataToFilter) {
     if (!dataToFilter) return { whereClause: "", values: [] };
+    if (dataToFilter.hasEquity === false) delete dataToFilter.hasEquity;
     const keys = Object.keys(dataToFilter);
     if (keys.length === 0) return { whereClause: "", values: [] };
 
-    // {title: 'boss', minSalary: 1000000, hasEquity: true} => ['"title" ILIKE $1', '"min_salary" >= $2', '"has_equity" = $3'] TODO: fix this in other sqlForFiltering
+    // TODO: fix comment below here and in other sqlForFiltering
+    // {title: 'boss', minSalary: 1000000, hasEquity: true} => ['"title" ILIKE $1', '"salary" >= $2', '"has_equity" = $3']
     const cols = keys.map((colName, idx) => {
-      if (colName === "title") {
-        dataToFilter["title"] = `%${dataToFilter["title"]}%`;
+      if (colName === "titleLike") {
+        dataToFilter.titleLike = `%${dataToFilter.titleLike}%`;
         return `title ILIKE $${idx + 1}`;
       } else if (colName === "minSalary") {
-        return `min_salary >= $${idx + 1}`;
+        return `salary >= $${idx + 1}`;
       } else if (colName === "hasEquity" && dataToFilter.hasEquity === true) {
         return `equity IS NOT NULL AND equity != 0`;
       }

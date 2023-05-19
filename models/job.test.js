@@ -2,6 +2,7 @@
 
 const db = require("../db.js");
 const { BadRequestError, NotFoundError } = require("../expressError");
+const { DatabaseError } = require("pg");
 const Job = require("./job.js");
 const {
   commonBeforeAll,
@@ -15,34 +16,38 @@ beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-/* id, title, salary, equity, company_handle */
-
 /************************************** create */
 
 describe("create", function () {
   const newJob = {
     title: "New Job",
     salary: 200000,
-    equity: 1.01,
+    equity: 0.5,
     companyHandle: "c1",
   };
 
   test("works", async function () {
     let job = await Job.create(newJob);
-    expect(job).toEqual(newJob);
+    expect(job).toEqual({
+      id: job.id,
+      title: "New Job",
+      salary: 200000,
+      equity: "0.5", // NUMERIC returns as string
+      companyHandle: "c1",
+    });
 
     const result = await db.query(
-      `SELECT id, title, salary, equity, company_handle
+      `SELECT id, title, salary, equity, company_handle AS "companyHandle"
            FROM jobs
            WHERE id = ${job.id}`
     );
     expect(result.rows).toEqual([
       {
-        id: `${job.id}`,
+        id: job.id,
         title: "New Job",
         salary: 200000,
-        equity: 1.01,
-        company_handle: "c1",
+        equity: "0.5", // NUMERIC returns as string
+        companyHandle: "c1",
       },
     ]);
   });
@@ -50,25 +55,21 @@ describe("create", function () {
   const newJob2 = {
     title: "New Job",
     salary: 200000,
-    equity: 1.01,
-    companyHandle: "nonsense",
+    equity: 0.7,
+    companyHandle: "nonsense?!",
   };
 
-  test("no company exists", async function () {
+  test("no such company exists", async function () {
     try {
       await Job.create(newJob2);
       throw new Error("fail test, you shouldn't get here");
     } catch (err) {
-      expect(err instanceof BadRequestError).toBeTruthy();
+      expect(err instanceof NotFoundError).toBeTruthy();
     }
   });
 });
 
 /************************************** findAll */
-
-/**(1, 'j1', 100000, 0.5, 'c1'),
-             (2, 'j2', 200000, 0.7, 'c2'),
-             (3, 'j3', 300000, 1.2, 'c1')`); */
 
 describe("findAllWithFilter", function () {
   test("works: no filter", async function () {
@@ -78,21 +79,21 @@ describe("findAllWithFilter", function () {
         id: 1,
         title: "j1",
         salary: 100000,
-        equity: 0.5,
+        equity: "0.5",
         companyHandle: "c1",
       },
       {
         id: 2,
         title: "j2",
         salary: 200000,
-        equity: 0.7,
+        equity: "0.7",
         companyHandle: "c2",
       },
       {
         id: 3,
         title: "j3",
         salary: 300000,
-        equity: 0,
+        equity: "0",
         companyHandle: "c1",
       },
     ]);
@@ -105,7 +106,7 @@ describe("findAllWithFilter", function () {
         id: 1,
         title: "j1",
         salary: 100000,
-        equity: 0.5,
+        equity: "0.5",
         companyHandle: "c1",
       },
     ]);
@@ -118,14 +119,14 @@ describe("findAllWithFilter", function () {
         id: 2,
         title: "j2",
         salary: 200000,
-        equity: 0.7,
+        equity: "0.7",
         companyHandle: "c2",
       },
       {
         id: 3,
         title: "j3",
         salary: 300000,
-        equity: 0,
+        equity: "0",
         companyHandle: "c1",
       },
     ]);
@@ -138,14 +139,14 @@ describe("findAllWithFilter", function () {
         id: 1,
         title: "j1",
         salary: 100000,
-        equity: 0.5,
+        equity: "0.5",
         companyHandle: "c1",
       },
       {
         id: 2,
         title: "j2",
         salary: 200000,
-        equity: 0.7,
+        equity: "0.7",
         companyHandle: "c2",
       },
     ]);
@@ -155,10 +156,24 @@ describe("findAllWithFilter", function () {
     let jobs = await Job.findAllWithFilter({ hasEquity: false });
     expect(jobs).toEqual([
       {
+        id: 1,
+        title: "j1",
+        salary: 100000,
+        equity: "0.5",
+        companyHandle: "c1",
+      },
+      {
+        id: 2,
+        title: "j2",
+        salary: 200000,
+        equity: "0.7",
+        companyHandle: "c2",
+      },
+      {
         id: 3,
         title: "j3",
         salary: 300000,
-        equity: 0,
+        equity: "0",
         companyHandle: "c1",
       },
     ]);
@@ -173,7 +188,7 @@ describe("sqlForFiltering", function () {
 
     expect(sql).toEqual({
       whereClause:
-        "\nWHERE title ILIKE $1 AND min_salary >= $2 AND equity IS NOT NULL AND equity != 0",
+        "\nWHERE title ILIKE $1 AND salary >= $2 AND equity IS NOT NULL AND equity != 0",
       values: ["%2%", 100000],
     });
   });
@@ -183,7 +198,7 @@ describe("sqlForFiltering", function () {
     const sql = Job.sqlForFiltering(dataToFilter);
 
     expect(sql).toEqual({
-      whereClause: "\nWHERE title ILIKE $1 AND min_salary >= $2",
+      whereClause: "\nWHERE title ILIKE $1 AND salary >= $2",
       values: ["%2%", 100000],
     });
   });
@@ -214,14 +229,14 @@ describe("get", function () {
       id: 1,
       title: "j1",
       salary: 100000,
-      equity: 0.5,
+      equity: "0.5",
       companyHandle: "c1",
     });
   });
 
   test("not found if no such job", async function () {
     try {
-      await Job.get("nope");
+      await Job.get(999999999);
       throw new Error("fail test, you shouldn't get here");
     } catch (err) {
       expect(err instanceof NotFoundError).toBeTruthy();
@@ -242,7 +257,9 @@ describe("update", function () {
     let job = await Job.update(1, updateData);
     expect(job).toEqual({
       id: 1,
-      ...updateData,
+      title: "New",
+      salary: 500000,
+      equity: "0.8",
       companyHandle: "c1",
     });
 
@@ -256,7 +273,7 @@ describe("update", function () {
         id: 1,
         title: "New",
         salary: 500000,
-        equity: 0.8,
+        equity: "0.8",
         company_handle: "c1",
       },
     ]);
@@ -294,7 +311,7 @@ describe("update", function () {
 
   test("not found if no such job", async function () {
     try {
-      await Job.update("nope", updateData);
+      await Job.update(999999999, updateData);
       throw new Error("fail test, you shouldn't get here");
     } catch (err) {
       expect(err instanceof NotFoundError).toBeTruthy();
@@ -322,10 +339,20 @@ describe("remove", function () {
 
   test("not found if no such job", async function () {
     try {
-      await Job.remove("nope");
+      await Job.remove(999999999);
       throw new Error("fail test, you shouldn't get here");
     } catch (err) {
       expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  });
+
+  test("databse error if not valid SERIAL", async function () {
+    try {
+      await Job.remove("nope");
+      throw new Error("fail test, you shouldn't get here");
+    } catch (err) {
+      console.log("err.constructor.name=", err.constructor.name);
+      expect(err instanceof DatabaseError).toBeTruthy();
     }
   });
 });

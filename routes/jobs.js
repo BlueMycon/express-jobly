@@ -11,14 +11,14 @@ const Job = require("../models/job");
 
 const jobNewSchema = require("../schemas/jobNew.json");
 const jobUpdateSchema = require("../schemas/jobUpdate.json");
-const jobFilterSchema = require("../schemas/jobFilter");
+const jobFilterSchema = require("../schemas/jobFilter.json");
 
 const router = new express.Router();
 
 /**Create a new job
  * POST / { job } =>  { job }
  *
- * job should be { id, title, salary, equity, companyHandle }
+ * job should be { title, salary, equity, companyHandle }
  *
  * Returns { id, title, salary, equity, companyHandle }
  *
@@ -26,9 +26,13 @@ const router = new express.Router();
  */
 
 router.post("/", ensureIsAdmin, async function (req, res, next) {
-  const validator = jsonschema.validate(req.body, jobNewSchema, {
-    required: true,
-  });
+  const { title, salary, equity, companyHandle } = req.body;
+  // TODO: validate equity via decimal.js
+  const validator = jsonschema.validate(
+    { title, salary, equity, companyHandle },
+    jobNewSchema,
+    { required: true }
+  );
   if (!validator.valid) {
     const errs = validator.errors.map((e) => e.stack);
     throw new BadRequestError(errs);
@@ -43,7 +47,7 @@ router.post("/", ensureIsAdmin, async function (req, res, next) {
  *   { jobs: [ { id, title, salary, equity, companyHandle }, ...] }
  *
  * Can filter on provided search filters:
- * - title
+ * - titleLike (will find case-insensitive, partial matches)
  * - minSalary
  * - hasEquity
  *
@@ -51,20 +55,23 @@ router.post("/", ensureIsAdmin, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
-  let title;
-  let minSalary;
-  let hasEquity;
+  let { titleLike, minSalary, hasEquity } = req.query;
 
-  if (req.query.minSalary) {
-    minSalary = Number(req.query.minSalary);
-  }
-  if (req.query.hasEquity) {
-    hasEquity = Boolean(req.query.hasEquity);
+  // TODO: I don't recall this with FlaskForms??
+  if (minSalary) {
+    console.log('minSalary', minSalary)
+    minSalary = Number(minSalary);
   }
 
-  const queryResp = { title, minSalary, hasEquity };
+  let jobFilters = {};
 
-  const result = jsonschema.validate(queryResp, jobFilterSchema, {
+  for (let [key, value] of Object.entries({titleLike, minSalary, hasEquity})) {
+    if (value !== undefined) {
+      jobFilters[key] = value;
+    }
+  }
+
+  const result = jsonschema.validate(jobFilters, jobFilterSchema, {
     required: true,
   });
 
@@ -72,25 +79,24 @@ router.get("/", async function (req, res, next) {
     // pass validation errors to error idr
     // (the "stack" key is generally the most useful)
     const errs = result.errors.map((err) => err.stack);
+    console.log('\n\nerrs=',errs, '\n\n')
     throw new BadRequestError(errs);
   }
 
-  const jobs = await Job.findAllWithFilter(req.query);
-
+  const jobs = await Job.findAllWithFilter(jobFilters);
   return res.json({ jobs });
 });
 
 /**Get info about single job
  * GET /[id]  =>  { job }
  *
- *  Job is { id, title, salary, equity, companyHandle}
- *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
+ *  Job is { id, title, salary, equity, companyHandle }
  *
  * Authorization required: none
  */
 
 router.get("/:id", async function (req, res, next) {
-  const job = await Job.get(req.params.id);
+  const job = await Job.get(Number(req.params.id));
   return res.json({ job });
 });
 
@@ -106,16 +112,30 @@ router.get("/:id", async function (req, res, next) {
  * Authorization required: admin
  */
 
+// TODO: middleware for URL param type integer
+// TODO: what if you want path/:id and also path/:name for same path?
 router.patch("/:id", ensureIsAdmin, async function (req, res, next) {
-  const validator = jsonschema.validate(req.body, jobUpdateSchema, {
-    required: true,
-  });
+  const { title, salary, equity } = req.body;
+
+  let jobData = {};
+
+  for (let [key, value] of Object.entries({title, salary, equity})) {
+    if (value) {
+      jobData[key] = value;
+    }
+  }
+
+  const validator = jsonschema.validate(
+    jobData,
+    jobUpdateSchema,
+    { required: true }
+  );
   if (!validator.valid) {
     const errs = validator.errors.map((e) => e.stack);
     throw new BadRequestError(errs);
   }
 
-  const job = await Job.update(req.params.id, req.body);
+  const job = await Job.update(req.params.id, jobData);
   return res.json({ job });
 });
 

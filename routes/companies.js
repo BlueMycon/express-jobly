@@ -26,6 +26,7 @@ const router = new express.Router();
  */
 
 router.post("/", ensureIsAdmin, async function (req, res, next) {
+  // TODO: validate handle char length in jsonschema
   const validator = jsonschema.validate(req.body, companyNewSchema, {
     required: true,
   });
