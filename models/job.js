@@ -23,6 +23,7 @@ class Job {
     try {
       await Company.get(companyHandle);
     } catch (err) {
+      // Re-throws NotFoundError from Company.get()
       throw err;
     }
 

@@ -63,6 +63,9 @@ describe("POST /jobs", function () {
   });
 });
 
+// TODO: create job as non-admin
+// TODO: create a job for invalid company handle
+
 /************************************** GET /jobs */
 
 describe("GET /jobs", function () {

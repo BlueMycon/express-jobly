@@ -31,6 +31,8 @@ async function commonBeforeAll() {
     await bcrypt.hash("password2", BCRYPT_WORK_FACTOR),
   ]);
 
+  // TODO: remove id
+  // get results from this and pull ids, export in array
   await db.query(`
       INSERT INTO jobs(id, title, salary, equity, company_handle)
       VALUES (1, 'j1', 100000, 0.5, 'c1'),

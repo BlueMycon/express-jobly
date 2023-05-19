@@ -180,7 +180,7 @@ describe("findAllWithFilter", function () {
   });
 });
 /************************************** sqlForFiltering */
-
+// TODO: make sqlForFiltering private method name _
 describe("sqlForFiltering", function () {
   test("works where all fields passed in and has equity", function () {
     const dataToFilter = { titleLike: "2", minSalary: 100000, hasEquity: true };

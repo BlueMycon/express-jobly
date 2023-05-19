@@ -57,7 +57,6 @@ router.post("/", ensureIsAdmin, async function (req, res, next) {
 router.get("/", async function (req, res, next) {
   let { titleLike, minSalary, hasEquity } = req.query;
 
-  // TODO: I don't recall this with FlaskForms??
   if (minSalary) {
     minSalary = Number(minSalary);
   }
