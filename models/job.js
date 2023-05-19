@@ -3,7 +3,7 @@
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate } = require("../helpers/sql");
-const Company = require('./company');
+const Company = require("./company");
 
 /** Related functions for jobs. */
 /* id, title, salary, equity, company_handle */
@@ -67,9 +67,9 @@ class Job {
    * whereClause:
    *      title ILIKE $1
    *      AND min_salary >= $2
-   *      AND has_equity = $3
+   *      AND equity IS NOT NULL AND equity != 0
    * values:
-   *      ['%boss%', 1000000, true]
+   *      ['%boss%', 1000000]
    */
   static sqlForFiltering(dataToFilter) {
     if (!dataToFilter) return { whereClause: "", values: [] };
@@ -83,12 +83,13 @@ class Job {
         return `title ILIKE $${idx + 1}`;
       } else if (colName === "minSalary") {
         return `min_salary >= $${idx + 1}`;
-      } else if (colName === "hasEquity") {
-        return `has_equity = $${idx + 1}`;
+      } else if (colName === "hasEquity" && dataToFilter.hasEquity === true) {
+        return `equity IS NOT NULL AND equity != 0`;
       }
     });
 
     const whereClause = cols.length > 0 ? "\nWHERE " + cols.join(" AND ") : "";
+    delete dataToFilter.hasEquity;
 
     return {
       whereClause,
