@@ -141,13 +141,24 @@ describe("sqlForFiltering", function () {
     });
   });
 
-  test("works for 2 fields", function () {
+  test("works for name and minEmployees", function () {
     const dataToFilter = { nameLike: "net", minEmployees: 10 };
     const sql = Company.sqlForFiltering(dataToFilter);
+
 
     expect(sql).toEqual({
       whereClause: "\nWHERE name ILIKE $1 AND num_employees >= $2",
       values: ["%net%", 10],
+    });
+  });
+
+  test("works for no filter chosen", function () {
+    const dataToFilter = {};
+    const sql = Company.sqlForFiltering(dataToFilter);
+
+    expect(sql).toEqual({
+      whereClause: "",
+      values: [],
     });
   });
 

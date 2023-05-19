@@ -59,7 +59,6 @@ router.get("/", async function (req, res, next) {
 
   // TODO: I don't recall this with FlaskForms??
   if (minSalary) {
-    console.log('minSalary', minSalary)
     minSalary = Number(minSalary);
   }
 
@@ -79,7 +78,6 @@ router.get("/", async function (req, res, next) {
     // pass validation errors to error idr
     // (the "stack" key is generally the most useful)
     const errs = result.errors.map((err) => err.stack);
-    console.log('\n\nerrs=',errs, '\n\n')
     throw new BadRequestError(errs);
   }
 

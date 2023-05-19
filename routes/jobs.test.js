@@ -96,7 +96,7 @@ describe("GET /jobs", function () {
   });
 
   test("ignores random query strings", async function () {
-    const resp = await request(app).get("/jobs?randomQueryString=ingored");
+    const resp = await request(app).get("/jobs?randomQueryString=ignored");
     expect(resp.body).toEqual({
       jobs: [
         {
@@ -124,17 +124,17 @@ describe("GET /jobs", function () {
     });
   });
 
-  test("test for json schema invalid", async function () {
+  test("test for json schema title invalid", async function () {
     const resp = await request(app).get("/jobs?titleLike=123");
     expect(resp.statusCode).toEqual(400);
   });
 
-  test("test for json schema invalid", async function () {
+  test("test for json schema minSalary invalid", async function () {
     const resp = await request(app).get("/jobs?minSalary=hello");
     expect(resp.statusCode).toEqual(400);
   });
 
-  test("test for json schema invalid", async function () {
+  test("test for json schema equity invalid", async function () {
     const resp = await request(app).get("/jobs?hasEquity=hello");
     expect(resp.statusCode).toEqual(400);
   });
